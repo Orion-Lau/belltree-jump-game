@@ -245,8 +245,8 @@ class VillageScene extends Phaser.Scene {
     this.player.setDisplaySize(58, 82);
     this.player.setCollideWorldBounds(false);
     this.player.body.setSize(420, 760).setOffset(300, 250);
-    this.player.setDragX(880);
-    this.player.setMaxVelocity(760, 820);
+    this.player.setDragX(1050);
+    this.player.setMaxVelocity(460, 820);
     this.physics.add.collider(this.player, this.platforms);
   }
 
@@ -330,10 +330,10 @@ class VillageScene extends Phaser.Scene {
     if (jumpPressed) this.jumpBufferedUntil = now + 130;
 
     if (left && !right) {
-      this.player.setAccelerationX(-1080);
+      this.player.setAccelerationX(-980);
       this.player.setFlipX(true);
     } else if (right && !left) {
-      this.player.setAccelerationX(1080);
+      this.player.setAccelerationX(980);
       this.player.setFlipX(false);
     } else {
       this.player.setAccelerationX(0);
@@ -369,7 +369,7 @@ class VillageScene extends Phaser.Scene {
     const inputDirection = mobileInput.left ? -1 : mobileInput.right ? 1 : 0;
     this.dashDirection = inputDirection || (this.player.flipX ? -1 : 1);
     this.player.setFlipX(this.dashDirection < 0);
-    this.player.setVelocityX(this.dashDirection * 860);
+    this.player.setVelocityX(this.dashDirection * 460);
     this.dashReadyAt = now + 360;
     this.dashAttackUntil = now + 700;
     this.clearDashTarget(150);
