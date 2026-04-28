@@ -17,6 +17,8 @@ const hud = {
   totalWeeds: document.querySelector("#total-weeds"),
   objective: document.querySelector("#objective"),
   overlay: document.querySelector("#overlay"),
+  levelSelect: document.querySelector("#level-select"),
+  levelSelectButtons: document.querySelectorAll(".level-select__button"),
   startButton: document.querySelector("#start-button"),
   retryButton: document.querySelector("#retry-button"),
   nextButton: document.querySelector("#next-button"),
@@ -33,6 +35,7 @@ const mobileInput = {
 
 const state = {
   started: false,
+  selectedLevel: 1,
   paused: false,
   level: 1,
   lives: 3,
@@ -571,6 +574,7 @@ class VillageScene extends Phaser.Scene {
 
   endRun(title, copy, canContinue, canRetry) {
     hud.overlay.classList.remove("is-hidden");
+    hud.levelSelect.classList.add("is-hidden");
     hud.touchControls.classList.remove("is-active");
     hud.overlay.querySelector("h1").textContent = title;
     hud.overlay.querySelector(".overlay__copy").textContent = copy;
@@ -641,6 +645,7 @@ function startLevel(level) {
   const nextLevel = Phaser.Math.Clamp(level, 1, MAX_LEVEL);
   const data = getLevelData(nextLevel);
   state.started = true;
+  state.selectedLevel = nextLevel;
   state.paused = false;
   state.level = nextLevel;
   state.lives = 3;
@@ -654,11 +659,28 @@ function startLevel(level) {
   hud.pauseButton.textContent = "II";
   hud.nextButton.classList.add("is-hidden");
   hud.retryButton.classList.add("is-hidden");
+  hud.levelSelect.classList.add("is-hidden");
   hud.touchControls.classList.add("is-active");
   hud.overlay.classList.add("is-hidden");
   game.scene.stop("VillageScene");
   game.scene.start("VillageScene");
   game.scene.getScene("VillageScene").physics.resume();
+}
+
+function selectLevel(level) {
+  state.selectedLevel = Phaser.Math.Clamp(level, 1, MAX_LEVEL);
+  if (!state.started) state.level = state.selectedLevel;
+  hud.levelSelectButtons.forEach((button) => {
+    const isSelected = Number(button.dataset.level) === state.selectedLevel;
+    button.classList.toggle("is-selected", isSelected);
+    button.setAttribute("aria-pressed", String(isSelected));
+  });
+  const data = getLevelData(state.selectedLevel);
+  hud.level.textContent = state.selectedLevel;
+  hud.totalBells.textContent = data.bells.length;
+  hud.totalLetters.textContent = data.letters.length + data.bumpBlocks.length;
+  hud.totalWeeds.textContent = data.enemies.length;
+  hud.objective.textContent = data.objective;
 }
 
 function preventTouchMenu(event) {
@@ -723,7 +745,11 @@ bindTouchButton("#touch-dash", {
   },
 });
 
-hud.startButton.addEventListener("click", () => startLevel(1));
+hud.levelSelectButtons.forEach((button) => {
+  button.addEventListener("click", () => selectLevel(Number(button.dataset.level)));
+});
+
+hud.startButton.addEventListener("click", () => startLevel(state.started ? 1 : state.selectedLevel));
 hud.retryButton.addEventListener("click", () => startLevel(state.level));
 hud.nextButton.addEventListener("click", () => startLevel(state.level + 1));
 hud.pauseButton.addEventListener("click", () => {

@@ -239,6 +239,35 @@ h1 {
   line-height: 1.6;
 }
 
+.level-select {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.level-select.is-hidden {
+  display: none;
+}
+
+.level-select__button {
+  width: 46px;
+  height: 42px;
+  border: 1px solid rgba(47, 135, 92, 0.34);
+  border-radius: 8px;
+  color: var(--leaf-dark);
+  background: rgba(255, 250, 238, 0.84);
+  box-shadow: 0 6px 0 rgba(31, 98, 68, 0.18);
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.level-select__button.is-selected {
+  color: #fff9e7;
+  background: linear-gradient(180deg, var(--leaf), var(--leaf-dark));
+  box-shadow: 0 6px 0 #174d35;
+}
+
 .overlay__actions {
   display: flex;
   flex-wrap: wrap;
