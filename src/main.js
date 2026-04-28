@@ -3,7 +3,7 @@ const GAME_HEIGHT = 540;
 const WORLD_WIDTH = 3200;
 const GROUND_Y = 486;
 const MAX_LEVEL = 3;
-const NORMAL_MOVE_SPEED = 220;
+const NORMAL_MOVE_SPEED = 242;
 const DASH_SPEED = 460;
 
 const hud = {
@@ -436,10 +436,10 @@ class VillageScene extends Phaser.Scene {
 
     if (jumpPressed) this.jumpBufferedUntil = now + 130;
     if (left && !right) {
-      this.player.setAccelerationX(-640);
+      this.player.setAccelerationX(-704);
       this.player.setFlipX(true);
     } else if (right && !left) {
-      this.player.setAccelerationX(640);
+      this.player.setAccelerationX(704);
       this.player.setFlipX(false);
     } else {
       this.player.setAccelerationX(0);
