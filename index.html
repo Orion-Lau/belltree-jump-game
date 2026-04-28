@@ -14,10 +14,11 @@
       <section id="game-shell" aria-label="鈴鈴村跳跳冒險遊戲">
         <div id="hud" class="hud">
           <div class="hud__cluster">
+            <span class="hud__pill">關卡 <strong id="level">1</strong></span>
             <span class="hud__pill">生命 <strong id="lives">3</strong></span>
-            <span class="hud__pill">鈴鐺 <strong id="bells">0</strong>/12</span>
-            <span class="hud__pill">信件 <strong id="letters">0</strong>/3</span>
-            <span class="hud__pill">雜草 <strong id="weeds">0</strong>/4</span>
+            <span class="hud__pill">鈴鐺 <strong id="bells">0</strong>/<span id="total-bells">12</span></span>
+            <span class="hud__pill">信件 <strong id="letters">0</strong>/<span id="total-letters">3</span></span>
+            <span class="hud__pill">雜草 <strong id="weeds">0</strong>/<span id="total-weeds">4</span></span>
           </div>
           <div class="hud__cluster hud__cluster--right">
             <span class="hud__pill" id="objective">抵達村口告示牌</span>
@@ -42,8 +43,11 @@
           <div class="overlay__panel">
             <p class="overlay__eyebrow">Belltree Village</p>
             <h1>鈴鈴村跳跳冒險</h1>
-            <p class="overlay__copy">幫村務小狗助理收回散落的信件，跳過平台、踩掉雜草怪，抵達村口告示牌。</p>
-            <button id="start-button" class="primary-button">開始遊戲</button>
+            <p class="overlay__copy">幫村務小狗助理收回散落的信件，跳過平台、衝刺撞掉雜草怪，抵達村口告示牌。</p>
+            <div class="overlay__actions">
+              <button id="start-button" class="primary-button">開始遊戲</button>
+              <button id="next-button" class="primary-button primary-button--alt is-hidden">下一關</button>
+            </div>
             <p class="overlay__hint">鍵盤：方向鍵 / A D 移動，空白鍵跳躍，Shift 衝刺。手機：使用畫面底部按鈕。</p>
           </div>
         </div>
