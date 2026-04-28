@@ -47,6 +47,7 @@ class VillageScene extends Phaser.Scene {
     this.jumpBufferedUntil = 0;
     this.dashReadyAt = 0;
     this.dashAttackUntil = 0;
+    this.dashDirection = 1;
     this.createTextures();
     this.createWorld();
     this.createPlayer();
@@ -265,9 +266,11 @@ class VillageScene extends Phaser.Scene {
     }
 
     if (dashPressed && now >= this.dashReadyAt) {
-      this.player.setVelocityX((this.player.flipX ? -1 : 1) * 460);
-      this.dashReadyAt = now + 360;
-      this.dashAttackUntil = now + 260;
+      this.dashDirection = this.player.flipX ? -1 : 1;
+      this.player.setVelocityX(this.dashDirection * 620);
+      this.dashReadyAt = now + 420;
+      this.dashAttackUntil = now + 520;
+      this.clearDashTarget();
       this.cameras.main.shake(70, 0.0018);
     }
 
@@ -286,24 +289,49 @@ class VillageScene extends Phaser.Scene {
     });
   }
 
+  clearDashTarget() {
+    const target = this.enemies.getChildren().find((enemy) => enemy.active && this.canDashHit(enemy));
+    if (target) this.clearEnemy(target, "dash");
+  }
+
+  canDashHit(enemy) {
+    const horizontalDistance = enemy.x - this.player.x;
+    const inFront = this.dashDirection > 0 ? horizontalDistance >= -20 : horizontalDistance <= 20;
+    const closeEnough = Math.abs(horizontalDistance) <= 92;
+    const verticallyAligned = Math.abs(enemy.y - this.player.y) <= 72;
+    return inFront && closeEnough && verticallyAligned;
+  }
+
+  clearEnemy(enemy, method) {
+    enemy.disableBody(true, true);
+    state.weeds += 1;
+    this.popSparkle(enemy.x, enemy.y);
+    this.updateHud();
+
+    if (method === "stomp") {
+      this.player.setVelocityY(-360);
+      return;
+    }
+
+    this.player.setVelocityX(-this.dashDirection * 150);
+    this.player.setVelocityY(-170);
+    this.dashAttackUntil = 0;
+    this.cameras.main.shake(90, 0.003);
+  }
+
   hitEnemy(player, enemy) {
     if (this.isResetting || !enemy.active) return;
 
-    const dashingIntoEnemy = this.time.now <= this.dashAttackUntil && Math.abs(player.body.velocity.x) > 260;
+    const dashingIntoEnemy = this.time.now <= this.dashAttackUntil || Math.abs(player.body.velocity.x) > 360;
     const fallingOntoEnemy = player.body.velocity.y > 120 && player.y < enemy.y - 8;
-    if (fallingOntoEnemy || dashingIntoEnemy) {
-      enemy.disableBody(true, true);
-      if (fallingOntoEnemy) {
-        player.setVelocityY(-360);
-      } else {
-        player.setVelocityX((player.flipX ? 1 : -1) * 150);
-        player.setVelocityY(-170);
-        this.dashAttackUntil = 0;
-        this.cameras.main.shake(90, 0.003);
-      }
-      state.weeds += 1;
-      this.popSparkle(enemy.x, enemy.y);
-      this.updateHud();
+    if (fallingOntoEnemy) {
+      this.clearEnemy(enemy, "stomp");
+      return;
+    }
+
+    if (dashingIntoEnemy) {
+      this.dashDirection = player.body.velocity.x < 0 ? -1 : 1;
+      this.clearEnemy(enemy, "dash");
       return;
     }
 
