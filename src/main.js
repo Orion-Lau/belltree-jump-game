@@ -366,7 +366,7 @@ class VillageScene extends Phaser.Scene {
 
   hitBumpBlock(player, block) {
     if (block.getData("used")) return;
-    const hitFromBelow = player.body.velocity.y < 0 && player.y > block.y + 20;
+    const hitFromBelow = player.y > block.y + 18;
     if (!hitFromBelow) return;
 
     block.setData("used", true);
