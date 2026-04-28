@@ -150,17 +150,20 @@ class VillageScene extends Phaser.Scene {
     [
       [330, 415],
       [475, 336],
-      [620, 415],
+      [690, 405],
       [795, 264],
-      [1115, 350],
+      [1040, 350],
       [1450, 282],
       [1588, 282],
-      [1810, 340],
+      [1740, 340],
       [2090, 254],
       [2410, 322],
-      [2550, 322],
+      [2475, 322],
       [2820, 268],
-    ].forEach(([x, y]) => this.bells.create(x, y, "bell"));
+    ].forEach(([x, y]) => {
+      const bell = this.bells.create(x, y, "bell");
+      bell.body.setSize(22, 24).setOffset(5, 5);
+    });
 
     this.letters = this.physics.add.staticGroup();
     [
