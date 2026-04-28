@@ -7,6 +7,7 @@ const hud = {
   lives: document.querySelector("#lives"),
   bells: document.querySelector("#bells"),
   letters: document.querySelector("#letters"),
+  weeds: document.querySelector("#weeds"),
   objective: document.querySelector("#objective"),
   overlay: document.querySelector("#overlay"),
   startButton: document.querySelector("#start-button"),
@@ -27,6 +28,7 @@ const state = {
   lives: 3,
   bells: 0,
   letters: 0,
+  weeds: 0,
   won: false,
 };
 
@@ -222,7 +224,7 @@ class VillageScene extends Phaser.Scene {
     this.cameras.main.setDeadzone(180, 110);
   }
 
-  update(_time, delta) {
+  update() {
     if (!state.started || state.paused || state.won) return;
 
     const now = this.time.now;
@@ -265,7 +267,7 @@ class VillageScene extends Phaser.Scene {
     }
 
     this.player.setAngle(onGround ? 0 : Phaser.Math.Clamp(this.player.body.velocity.y / 50, -7, 9));
-    this.updateEnemies(delta);
+    this.updateEnemies();
 
     if (this.player.y > GAME_HEIGHT + 60) this.loseLife();
   }
@@ -286,7 +288,8 @@ class VillageScene extends Phaser.Scene {
     if (fallingOntoEnemy) {
       enemy.disableBody(true, true);
       player.setVelocityY(-360);
-      state.bells += 1;
+      state.weeds += 1;
+      this.popSparkle(enemy.x, enemy.y);
       this.updateHud();
       return;
     }
@@ -317,7 +320,7 @@ class VillageScene extends Phaser.Scene {
     if (state.won) return;
     state.won = true;
     this.physics.pause();
-    this.endRun("村務完成", `收集 ${state.bells}/12 鈴鐺、${state.letters}/3 封信件。`);
+    this.endRun("村務完成", `收集 ${state.bells}/12 鈴鐺、${state.letters}/3 封信件，清掉 ${state.weeds}/4 隻雜草怪。`);
   }
 
   endRun(title, copy) {
@@ -345,6 +348,7 @@ class VillageScene extends Phaser.Scene {
     hud.lives.textContent = state.lives;
     hud.bells.textContent = state.bells;
     hud.letters.textContent = state.letters;
+    hud.weeds.textContent = state.weeds;
   }
 }
 
@@ -383,11 +387,16 @@ function resetState() {
   state.lives = 3;
   state.bells = 0;
   state.letters = 0;
+  state.weeds = 0;
   state.won = false;
   resetMobileInput();
   hud.objective.textContent = "抵達村口告示牌";
   hud.pauseButton.textContent = "II";
   hud.touchControls.classList.add("is-active");
+}
+
+function preventTouchMenu(event) {
+  event.preventDefault();
 }
 
 function bindTouchButton(selector, handlers) {
@@ -410,7 +419,14 @@ function bindTouchButton(selector, handlers) {
   button.addEventListener("pointerup", release);
   button.addEventListener("pointercancel", release);
   button.addEventListener("lostpointercapture", () => handlers.up?.());
+  button.addEventListener("contextmenu", preventTouchMenu);
+  button.addEventListener("selectstart", preventTouchMenu);
+  button.addEventListener("dragstart", preventTouchMenu);
 }
+
+hud.touchControls.addEventListener("contextmenu", preventTouchMenu);
+hud.touchControls.addEventListener("selectstart", preventTouchMenu);
+hud.touchControls.addEventListener("dragstart", preventTouchMenu);
 
 bindTouchButton("#touch-left", {
   down: () => {
