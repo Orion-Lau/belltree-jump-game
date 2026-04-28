@@ -3,6 +3,8 @@ const GAME_HEIGHT = 540;
 const WORLD_WIDTH = 3200;
 const GROUND_Y = 486;
 const MAX_LEVEL = 2;
+const NORMAL_MOVE_SPEED = 220;
+const DASH_SPEED = 460;
 
 const hud = {
   level: document.querySelector("#level"),
@@ -37,6 +39,7 @@ const state = {
   letters: 0,
   weeds: 0,
   won: false,
+  failed: false,
 };
 
 function getLevelData(level) {
@@ -311,7 +314,7 @@ class VillageScene extends Phaser.Scene {
   }
 
   update() {
-    if (!state.started || state.paused || state.won) return;
+    if (!state.started || state.paused || state.won || state.failed) return;
 
     const now = this.time.now;
     const onGround = this.player.body.blocked.down || this.player.body.touching.down;
@@ -330,10 +333,10 @@ class VillageScene extends Phaser.Scene {
     if (jumpPressed) this.jumpBufferedUntil = now + 130;
 
     if (left && !right) {
-      this.player.setAccelerationX(-980);
+      this.player.setAccelerationX(-640);
       this.player.setFlipX(true);
     } else if (right && !left) {
-      this.player.setAccelerationX(980);
+      this.player.setAccelerationX(640);
       this.player.setFlipX(false);
     } else {
       this.player.setAccelerationX(0);
@@ -349,6 +352,9 @@ class VillageScene extends Phaser.Scene {
     if (dashPressed) this.performDash();
 
     if (now <= this.dashAttackUntil) this.clearDashTarget(118);
+    if (now > this.dashAttackUntil && Math.abs(this.player.body.velocity.x) > NORMAL_MOVE_SPEED) {
+      this.player.setVelocityX(Math.sign(this.player.body.velocity.x) * NORMAL_MOVE_SPEED);
+    }
 
     this.player.setAngle(onGround ? 0 : Phaser.Math.Clamp(this.player.body.velocity.y / 50, -7, 9));
     this.updateEnemies();
@@ -369,7 +375,7 @@ class VillageScene extends Phaser.Scene {
     const inputDirection = mobileInput.left ? -1 : mobileInput.right ? 1 : 0;
     this.dashDirection = inputDirection || (this.player.flipX ? -1 : 1);
     this.player.setFlipX(this.dashDirection < 0);
-    this.player.setVelocityX(this.dashDirection * 460);
+    this.player.setVelocityX(this.dashDirection * DASH_SPEED);
     this.dashReadyAt = now + 360;
     this.dashAttackUntil = now + 700;
     this.clearDashTarget(150);
@@ -442,7 +448,7 @@ class VillageScene extends Phaser.Scene {
     this.cameras.main.shake(180, 0.008);
 
     if (state.lives <= 0) {
-      this.failRun("任務失敗", "按 R 或點擊按鈕重新開始。");
+      this.failRun("任務失敗", "按 R 或點擊按鈕重新開始。", true);
       return;
     }
 
@@ -453,10 +459,15 @@ class VillageScene extends Phaser.Scene {
     });
   }
 
-  failRun(title, copy) {
-    if (this.isResetting || state.won) return;
+  failRun(title, copy, force = false) {
+    if ((!force && this.isResetting) || state.won || state.failed) return;
     this.isResetting = true;
+    state.failed = true;
+    state.paused = false;
     state.lives = 0;
+    resetMobileInput();
+    this.player?.setAcceleration(0, 0);
+    this.player?.setVelocity(0, 0);
     this.updateHud();
     this.physics.pause();
     this.endRun(title, copy, false);
@@ -545,6 +556,7 @@ function startLevel(level) {
   state.letters = 0;
   state.weeds = 0;
   state.won = false;
+  state.failed = false;
   resetMobileInput();
   hud.objective.textContent = data.objective;
   hud.pauseButton.textContent = "II";
@@ -617,7 +629,7 @@ bindTouchButton("#touch-dash", {
   down: () => {
     mobileInput.dashQueued = true;
     const scene = game.scene.getScene("VillageScene");
-    if (state.started && !state.paused && !state.won && scene?.performDash) scene.performDash();
+    if (state.started && !state.paused && !state.won && !state.failed && scene?.performDash) scene.performDash();
   },
 });
 
@@ -630,7 +642,7 @@ hud.nextButton.addEventListener("click", () => {
 });
 
 hud.pauseButton.addEventListener("click", () => {
-  if (!state.started || state.won) return;
+  if (!state.started || state.won || state.failed) return;
   const scene = game.scene.getScene("VillageScene");
   state.paused = !state.paused;
   hud.pauseButton.textContent = state.paused ? ">" : "II";
