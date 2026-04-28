@@ -2,7 +2,7 @@ const GAME_WIDTH = 960;
 const GAME_HEIGHT = 540;
 const WORLD_WIDTH = 3200;
 const GROUND_Y = 486;
-const MAX_LEVEL = 2;
+const MAX_LEVEL = 3;
 const NORMAL_MOVE_SPEED = 220;
 const DASH_SPEED = 460;
 
@@ -18,6 +18,7 @@ const hud = {
   objective: document.querySelector("#objective"),
   overlay: document.querySelector("#overlay"),
   startButton: document.querySelector("#start-button"),
+  retryButton: document.querySelector("#retry-button"),
   nextButton: document.querySelector("#next-button"),
   pauseButton: document.querySelector("#pause-button"),
   touchControls: document.querySelector("#touch-controls"),
@@ -43,6 +44,58 @@ const state = {
 };
 
 function getLevelData(level) {
+  if (level === 3) {
+    return {
+      name: "狸貓商店街",
+      objective: "頂開方塊找信件",
+      fallFails: true,
+      hasShopkeeper: true,
+      groundSegments: [
+        [0, 760],
+        [950, 1500],
+        [1700, 2250],
+        [2450, WORLD_WIDTH],
+      ],
+      platforms: [
+        [430, 372, 2],
+        [820, 304, 2],
+        [1220, 366, 2],
+        [1580, 286, 2],
+        [1970, 348, 3],
+        [2380, 290, 2],
+        [2760, 356, 2],
+      ],
+      bells: [
+        [340, 418],
+        [480, 322],
+        [860, 252],
+        [1280, 318],
+        [1620, 238],
+        [2020, 300],
+        [2160, 300],
+        [2420, 242],
+        [2820, 308],
+        [3020, 418],
+      ],
+      letters: [
+        [700, 418],
+      ],
+      bumpBlocks: [
+        [620, 330],
+        [1120, 300],
+        [1880, 286],
+        [2580, 322],
+      ],
+      enemies: [
+        [540, 430, 430, 700],
+        [1320, 430, 1200, 1450],
+        [2060, 296, 1980, 2220],
+        [2870, 430, 2760, 3030],
+      ],
+      goalX: 3075,
+    };
+  }
+
   if (level === 2) {
     return {
       name: "坑洞郵路",
@@ -80,6 +133,7 @@ function getLevelData(level) {
         [1815, 230],
         [2880, 268],
       ],
+      bumpBlocks: [],
       enemies: [
         [560, 430, 470, 620],
         [1110, 430, 940, 1220],
@@ -125,6 +179,7 @@ function getLevelData(level) {
       [1515, 252],
       [2850, 258],
     ],
+    bumpBlocks: [],
     enemies: [
       [600, 430, 520, 710],
       [1230, 430, 1120, 1330],
@@ -142,6 +197,7 @@ class VillageScene extends Phaser.Scene {
 
   preload() {
     this.load.image("assistant", "assets/characters/village-assistant.png");
+    this.load.image("shopkeeper", "assets/characters/tanuki-shopkeeper.png");
   }
 
   create() {
@@ -156,16 +212,14 @@ class VillageScene extends Phaser.Scene {
     this.createWorld();
     this.createPlayer();
     this.createCollectibles();
+    this.createBumpBlocks();
     this.createEnemies();
     this.createGoal();
     this.createInput();
     this.setupCamera();
     this.updateHud();
-    if (state.started && !state.paused && !state.failed && !state.won) {
-      this.physics.resume();
-    } else {
-      this.physics.pause();
-    }
+    if (state.started && !state.paused && !state.failed && !state.won) this.physics.resume();
+    else this.physics.pause();
   }
 
   createTextures() {
@@ -206,6 +260,18 @@ class VillageScene extends Phaser.Scene {
     sign.fillStyle(0xf5dd9d, 1).fillRoundedRect(15, 8, 72, 34, 4);
     sign.fillStyle(0x5d3a22, 1).fillRect(45, 50, 12, 58);
     sign.generateTexture("notice-sign", 102, 108);
+
+    const block = this.make.graphics({ x: 0, y: 0, add: false });
+    block.fillStyle(0xf2b84b, 1).fillRoundedRect(0, 0, 44, 44, 5);
+    block.lineStyle(3, 0x9d6722, 1).strokeRoundedRect(0, 0, 44, 44, 5);
+    block.fillStyle(0x8f5b1d, 1).fillCircle(22, 16, 4).fillRect(20, 20, 4, 12).fillCircle(22, 36, 2);
+    block.generateTexture("bump-block", 44, 44);
+
+    const used = this.make.graphics({ x: 0, y: 0, add: false });
+    used.fillStyle(0xb88b54, 1).fillRoundedRect(0, 0, 44, 44, 5);
+    used.lineStyle(3, 0x795638, 1).strokeRoundedRect(0, 0, 44, 44, 5);
+    used.fillStyle(0x8b6842, 1).fillRect(10, 20, 24, 5);
+    used.generateTexture("used-block", 44, 44);
   }
 
   createWorld() {
@@ -224,14 +290,16 @@ class VillageScene extends Phaser.Scene {
     });
 
     for (let i = 0; i < 18; i += 1) {
-      const x = i * 210 + 80;
-      const cloud = this.add.ellipse(x, 78 + (i % 3) * 32, 120, 34, 0xffffff, 0.55);
+      const cloud = this.add.ellipse(i * 210 + 80, 78 + (i % 3) * 32, 120, 34, 0xffffff, 0.55);
       cloud.setScrollFactor(0.22);
     }
-
     for (let i = 0; i < 10; i += 1) {
-      const x = i * 360 - 80;
-      this.add.triangle(x, 388, 0, 130, 190, 130, 95, 10, 0x6eb97b, 0.9).setScrollFactor(0.45);
+      this.add.triangle(i * 360 - 80, 388, 0, 130, 190, 130, 95, 10, 0x6eb97b, 0.9).setScrollFactor(0.45);
+    }
+
+    if (this.levelData.hasShopkeeper) {
+      this.add.rectangle(2925, 392, 210, 126, 0x9b6b3d, 0.28).setOrigin(0.5, 1);
+      this.add.image(2920, GROUND_Y - 92, "shopkeeper").setDisplaySize(104, 136).setDepth(1);
     }
 
     this.platforms = this.physics.add.staticGroup();
@@ -241,7 +309,6 @@ class VillageScene extends Phaser.Scene {
         this.platforms.create(x + 48, GROUND_Y + 58, "dirt-block");
       }
     });
-
     this.levelData.platforms.forEach(([x, y, count]) => {
       for (let i = 0; i < count; i += 1) this.platforms.create(x + i * 96, y, "grass-block");
     });
@@ -253,7 +320,7 @@ class VillageScene extends Phaser.Scene {
     this.player.setCollideWorldBounds(false);
     this.player.body.setSize(420, 760).setOffset(300, 250);
     this.player.setDragX(1050);
-    this.player.setMaxVelocity(460, 820);
+    this.player.setMaxVelocity(DASH_SPEED, 820);
     this.physics.add.collider(this.player, this.platforms);
   }
 
@@ -265,7 +332,7 @@ class VillageScene extends Phaser.Scene {
     });
 
     this.letters = this.physics.add.staticGroup();
-    this.levelData.letters.forEach(([x, y]) => this.letters.create(x, y, "letter"));
+    this.levelData.letters.forEach(([x, y]) => this.createLetter(x, y));
 
     this.physics.add.overlap(this.player, this.bells, (_player, bell) => {
       bell.disableBody(true, true);
@@ -273,12 +340,46 @@ class VillageScene extends Phaser.Scene {
       this.popSparkle(bell.x, bell.y);
       this.updateHud();
     });
-
     this.physics.add.overlap(this.player, this.letters, (_player, letter) => {
       letter.disableBody(true, true);
       state.letters += 1;
       this.popSparkle(letter.x, letter.y);
       this.updateHud();
+    });
+  }
+
+  createLetter(x, y) {
+    const letter = this.letters.create(x, y, "letter");
+    letter.body.setSize(30, 20).setOffset(4, 3);
+    return letter;
+  }
+
+  createBumpBlocks() {
+    this.bumpBlocks = this.physics.add.staticGroup();
+    this.levelData.bumpBlocks.forEach(([x, y]) => {
+      const block = this.bumpBlocks.create(x, y, "bump-block");
+      block.setData("used", false);
+      block.body.setSize(44, 44);
+    });
+    this.physics.add.collider(this.player, this.bumpBlocks, this.hitBumpBlock, undefined, this);
+  }
+
+  hitBumpBlock(player, block) {
+    if (block.getData("used")) return;
+    const hitFromBelow = player.body.velocity.y < 0 && player.y > block.y + 20;
+    if (!hitFromBelow) return;
+
+    block.setData("used", true);
+    block.setTexture("used-block");
+    player.setVelocityY(120);
+    this.createLetter(block.x, block.y - 54);
+    this.popSparkle(block.x, block.y - 24);
+    this.tweens.add({
+      targets: block,
+      y: block.y - 8,
+      duration: 70,
+      yoyo: true,
+      ease: "Quad.easeOut",
     });
   }
 
@@ -291,7 +392,6 @@ class VillageScene extends Phaser.Scene {
       enemy.setVelocityX(-75);
       enemy.setBounce(0);
     });
-
     this.physics.add.collider(this.enemies, this.platforms);
     this.physics.add.overlap(this.player, this.enemies, this.hitEnemy, undefined, this);
   }
@@ -326,16 +426,15 @@ class VillageScene extends Phaser.Scene {
 
     const left = this.cursors.left.isDown || this.keys.left.isDown || mobileInput.left;
     const right = this.cursors.right.isDown || this.keys.right.isDown || mobileInput.right;
-    const keyboardJump = Phaser.Input.Keyboard.JustDown(this.cursors.space) || Phaser.Input.Keyboard.JustDown(this.keys.jump);
-    const keyboardDash = Phaser.Input.Keyboard.JustDown(this.keys.dash);
-    const jumpPressed = keyboardJump || mobileInput.jumpQueued;
-    const dashPressed = keyboardDash || mobileInput.dashQueued;
-
+    const jumpPressed =
+      Phaser.Input.Keyboard.JustDown(this.cursors.space) ||
+      Phaser.Input.Keyboard.JustDown(this.keys.jump) ||
+      mobileInput.jumpQueued;
+    const dashPressed = Phaser.Input.Keyboard.JustDown(this.keys.dash) || mobileInput.dashQueued;
     mobileInput.jumpQueued = false;
     mobileInput.dashQueued = false;
 
     if (jumpPressed) this.jumpBufferedUntil = now + 130;
-
     if (left && !right) {
       this.player.setAccelerationX(-640);
       this.player.setFlipX(true);
@@ -346,15 +445,13 @@ class VillageScene extends Phaser.Scene {
       this.player.setAccelerationX(0);
     }
 
-    const canUseCoyoteJump = now - this.lastGroundedAt <= 115;
-    if (this.jumpBufferedUntil > now && canUseCoyoteJump) {
+    if (this.jumpBufferedUntil > now && now - this.lastGroundedAt <= 115) {
       this.player.setVelocityY(-590);
       this.jumpBufferedUntil = 0;
       this.lastGroundedAt = 0;
     }
 
     if (dashPressed) this.performDash();
-
     if (now <= this.dashAttackUntil) this.clearDashTarget(118);
     if (now > this.dashAttackUntil && Math.abs(this.player.body.velocity.x) > NORMAL_MOVE_SPEED) {
       this.player.setVelocityX(Math.sign(this.player.body.velocity.x) * NORMAL_MOVE_SPEED);
@@ -362,20 +459,15 @@ class VillageScene extends Phaser.Scene {
 
     this.player.setAngle(onGround ? 0 : Phaser.Math.Clamp(this.player.body.velocity.y / 50, -7, 9));
     this.updateEnemies();
-
     if (this.player.y > GAME_HEIGHT + 45) {
-      if (this.levelData.fallFails) {
-        this.failRun("掉進坑洞", "第二關的坑洞會直接任務失敗，重新開始再挑戰一次。");
-      } else {
-        this.loseLife();
-      }
+      if (this.levelData.fallFails) this.failRun("掉進坑洞", "這一關的坑洞會直接任務失敗，可以重試本關或從第一關開始。");
+      else this.loseLife();
     }
   }
 
   performDash() {
     const now = this.time.now;
     if (now < this.dashReadyAt) return;
-
     const inputDirection = mobileInput.left ? -1 : mobileInput.right ? 1 : 0;
     this.dashDirection = inputDirection || (this.player.flipX ? -1 : 1);
     this.player.setFlipX(this.dashDirection < 0);
@@ -403,9 +495,7 @@ class VillageScene extends Phaser.Scene {
   canDashHit(enemy, range) {
     const horizontalDistance = enemy.x - this.player.x;
     const inFront = this.dashDirection > 0 ? horizontalDistance >= -38 : horizontalDistance <= 38;
-    const closeEnough = Math.abs(horizontalDistance) <= range;
-    const verticallyAligned = Math.abs(enemy.y - this.player.y) <= 86;
-    return inFront && closeEnough && verticallyAligned;
+    return inFront && Math.abs(horizontalDistance) <= range && Math.abs(enemy.y - this.player.y) <= 86;
   }
 
   clearEnemy(enemy, method) {
@@ -413,12 +503,10 @@ class VillageScene extends Phaser.Scene {
     state.weeds += 1;
     this.popSparkle(enemy.x, enemy.y);
     this.updateHud();
-
     if (method === "stomp") {
       this.player.setVelocityY(-360);
       return;
     }
-
     this.player.setVelocityX(-this.dashDirection * 110);
     this.player.setVelocityY(-150);
     this.dashAttackUntil = 0;
@@ -427,35 +515,29 @@ class VillageScene extends Phaser.Scene {
 
   hitEnemy(player, enemy) {
     if (this.isResetting || !enemy.active) return;
-
     const fallingOntoEnemy = player.body.velocity.y > 120 && player.y < enemy.y - 8;
     if (fallingOntoEnemy) {
       this.clearEnemy(enemy, "stomp");
       return;
     }
-
-    const dashingIntoEnemy = this.time.now <= this.dashAttackUntil || Math.abs(player.body.velocity.x) > 520;
-    if (dashingIntoEnemy) {
+    if (this.time.now <= this.dashAttackUntil || Math.abs(player.body.velocity.x) > 520) {
       this.dashDirection = player.body.velocity.x < 0 ? -1 : 1;
       this.clearEnemy(enemy, "dash");
       return;
     }
-
     this.loseLife();
   }
 
   loseLife() {
-    if (this.isResetting || state.won) return;
+    if (this.isResetting || state.won || state.failed) return;
     this.isResetting = true;
     state.lives -= 1;
     this.updateHud();
     this.cameras.main.shake(180, 0.008);
-
     if (state.lives <= 0) {
-      this.failRun("任務失敗", "按 R 或點擊按鈕重新開始。", true);
+      this.failRun("任務失敗", "從第一關開始，或在第二關、第三關重試本關。", true);
       return;
     }
-
     this.time.delayedCall(420, () => {
       this.player.setPosition(Math.max(110, this.player.x - 230), 320);
       this.player.setVelocity(0, 0);
@@ -474,7 +556,7 @@ class VillageScene extends Phaser.Scene {
     this.player?.setVelocity(0, 0);
     this.updateHud();
     this.physics.pause();
-    this.endRun(title, copy, false);
+    this.endRun(title, copy, false, state.level > 1);
   }
 
   finishLevel() {
@@ -482,18 +564,19 @@ class VillageScene extends Phaser.Scene {
     state.won = true;
     this.physics.pause();
     const canContinue = state.level < MAX_LEVEL;
-    const title = canContinue ? "第一關完成" : "村務全部完成";
-    const copy = `收集 ${state.bells}/${this.levelData.bells.length} 鈴鐺、${state.letters}/${this.levelData.letters.length} 封信件，清掉 ${state.weeds}/${this.levelData.enemies.length} 隻雜草怪。`;
-    this.endRun(title, copy, canContinue);
+    const title = canContinue ? `第 ${state.level} 關完成` : "村務全部完成";
+    const copy = `收集 ${state.bells}/${this.levelData.bells.length} 鈴鐺、${state.letters}/${this.getTotalLetters()} 封信件，清掉 ${state.weeds}/${this.levelData.enemies.length} 隻雜草怪。`;
+    this.endRun(title, copy, canContinue, false);
   }
 
-  endRun(title, copy, canContinue) {
+  endRun(title, copy, canContinue, canRetry) {
     hud.overlay.classList.remove("is-hidden");
     hud.touchControls.classList.remove("is-active");
     hud.overlay.querySelector("h1").textContent = title;
     hud.overlay.querySelector(".overlay__copy").textContent = copy;
-    hud.startButton.textContent = "重新開始";
+    hud.startButton.textContent = "從第一關開始";
     hud.nextButton.classList.toggle("is-hidden", !canContinue);
+    hud.retryButton.classList.toggle("is-hidden", !canRetry);
     hud.objective.textContent = title;
   }
 
@@ -509,6 +592,10 @@ class VillageScene extends Phaser.Scene {
     });
   }
 
+  getTotalLetters() {
+    return this.levelData.letters.length + this.levelData.bumpBlocks.length;
+  }
+
   updateHud() {
     hud.level.textContent = state.level;
     hud.lives.textContent = state.lives;
@@ -516,7 +603,7 @@ class VillageScene extends Phaser.Scene {
     hud.letters.textContent = state.letters;
     hud.weeds.textContent = state.weeds;
     hud.totalBells.textContent = this.levelData.bells.length;
-    hud.totalLetters.textContent = this.levelData.letters.length;
+    hud.totalLetters.textContent = this.getTotalLetters();
     hud.totalWeeds.textContent = this.levelData.enemies.length;
   }
 }
@@ -551,10 +638,11 @@ function resetMobileInput() {
 }
 
 function startLevel(level) {
-  const data = getLevelData(level);
+  const nextLevel = Phaser.Math.Clamp(level, 1, MAX_LEVEL);
+  const data = getLevelData(nextLevel);
   state.started = true;
   state.paused = false;
-  state.level = level;
+  state.level = nextLevel;
   state.lives = 3;
   state.bells = 0;
   state.letters = 0;
@@ -565,6 +653,7 @@ function startLevel(level) {
   hud.objective.textContent = data.objective;
   hud.pauseButton.textContent = "II";
   hud.nextButton.classList.add("is-hidden");
+  hud.retryButton.classList.add("is-hidden");
   hud.touchControls.classList.add("is-active");
   hud.overlay.classList.add("is-hidden");
   game.scene.stop("VillageScene");
@@ -613,7 +702,6 @@ bindTouchButton("#touch-left", {
     mobileInput.left = false;
   },
 });
-
 bindTouchButton("#touch-right", {
   down: () => {
     mobileInput.right = true;
@@ -622,13 +710,11 @@ bindTouchButton("#touch-right", {
     mobileInput.right = false;
   },
 });
-
 bindTouchButton("#touch-jump", {
   down: () => {
     mobileInput.jumpQueued = true;
   },
 });
-
 bindTouchButton("#touch-dash", {
   down: () => {
     mobileInput.dashQueued = true;
@@ -637,14 +723,9 @@ bindTouchButton("#touch-dash", {
   },
 });
 
-hud.startButton.addEventListener("click", () => {
-  startLevel(state.level);
-});
-
-hud.nextButton.addEventListener("click", () => {
-  startLevel(Math.min(MAX_LEVEL, state.level + 1));
-});
-
+hud.startButton.addEventListener("click", () => startLevel(1));
+hud.retryButton.addEventListener("click", () => startLevel(state.level));
+hud.nextButton.addEventListener("click", () => startLevel(state.level + 1));
 hud.pauseButton.addEventListener("click", () => {
   if (!state.started || state.won || state.failed) return;
   const scene = game.scene.getScene("VillageScene");
@@ -659,9 +740,7 @@ hud.pauseButton.addEventListener("click", () => {
     hud.objective.textContent = getLevelData(state.level).objective;
   }
 });
-
 window.addEventListener("keydown", (event) => {
-  if (event.code === "KeyR") startLevel(state.level);
+  if (event.code === "KeyR") startLevel(1);
 });
-
 window.addEventListener("blur", resetMobileInput);
