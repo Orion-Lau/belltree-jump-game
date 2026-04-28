@@ -1,0 +1,340 @@
+:root {
+  color-scheme: light;
+  --ink: #26302d;
+  --ink-soft: #52615c;
+  --cream: #fff7e7;
+  --leaf: #2f875c;
+  --leaf-dark: #1f6244;
+  --gold: #e7ae32;
+  --sky: #8fd8ee;
+  --panel: rgba(255, 248, 231, 0.9);
+  --edge: rgba(38, 48, 45, 0.14);
+  font-family:
+    "Trebuchet MS",
+    "Noto Sans TC",
+    system-ui,
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  color: var(--ink);
+  background: linear-gradient(180deg, #79c9e7 0%, #bde9d5 58%, #7db668 100%);
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+button {
+  font: inherit;
+}
+
+#app {
+  display: grid;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  place-items: center;
+  padding: 18px;
+}
+
+#game-shell {
+  position: relative;
+  width: min(100%, 1120px);
+  height: min(100%, 680px);
+  min-height: 420px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  background: #77cde9;
+  box-shadow: 0 24px 70px rgba(31, 67, 56, 0.35);
+  user-select: none;
+}
+
+#game-container,
+#game-container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hud {
+  position: absolute;
+  z-index: 5;
+  top: calc(12px + env(safe-area-inset-top));
+  right: calc(12px + env(safe-area-inset-right));
+  left: calc(12px + env(safe-area-inset-left));
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.hud__cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hud__cluster--right {
+  justify-content: flex-end;
+}
+
+.hud__pill,
+.icon-button,
+.touch-button {
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 8px 18px rgba(32, 83, 71, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.hud__pill {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 10px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.hud__pill strong {
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.icon-button {
+  width: 38px;
+  min-height: 34px;
+  padding: 0;
+  color: var(--leaf-dark);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.touch-controls {
+  position: absolute;
+  z-index: 6;
+  right: calc(18px + env(safe-area-inset-right));
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  left: calc(18px + env(safe-area-inset-left));
+  display: none;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  pointer-events: none;
+}
+
+.touch-controls.is-active {
+  display: flex;
+}
+
+.touch-controls__cluster {
+  display: flex;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.touch-button {
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  color: #244339;
+  background: rgba(255, 250, 238, 0.72);
+  cursor: pointer;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.touch-button--small {
+  width: 52px;
+  height: 52px;
+  align-self: flex-end;
+  font-size: 24px;
+}
+
+.touch-button:active {
+  transform: translateY(2px) scale(0.98);
+  background: rgba(255, 241, 168, 0.84);
+}
+
+.overlay {
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(180deg, rgba(70, 171, 198, 0.3), rgba(65, 119, 73, 0.4)),
+    radial-gradient(circle at 50% 78%, rgba(255, 249, 224, 0.45), transparent 42%);
+}
+
+.overlay.is-hidden {
+  display: none;
+}
+
+.overlay__panel {
+  width: min(460px, 100%);
+  padding: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 8px;
+  background: rgba(255, 250, 238, 0.92);
+  box-shadow: 0 22px 60px rgba(29, 71, 58, 0.28);
+  text-align: center;
+}
+
+.overlay__eyebrow {
+  margin: 0 0 6px;
+  color: var(--leaf-dark);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  color: #244339;
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1.04;
+}
+
+.overlay__copy {
+  margin: 14px auto 22px;
+  color: var(--ink-soft);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.primary-button {
+  min-width: 158px;
+  min-height: 46px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff9e7;
+  background: linear-gradient(180deg, var(--leaf), var(--leaf-dark));
+  box-shadow: 0 10px 0 #174d35;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.primary-button:active {
+  transform: translateY(4px);
+  box-shadow: 0 6px 0 #174d35;
+}
+
+.overlay__hint {
+  margin: 20px 0 0;
+  color: #6e786f;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+@media (pointer: fine) and (min-width: 900px) {
+  .touch-controls.is-active {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  #app {
+    padding: 0;
+  }
+
+  #game-shell {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .hud {
+    gap: 8px;
+  }
+
+  #objective {
+    display: none;
+  }
+
+  .hud__pill {
+    min-height: 30px;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  .hud__pill strong {
+    font-size: 14px;
+  }
+
+  .icon-button {
+    width: 34px;
+    min-height: 30px;
+  }
+
+  .touch-button {
+    width: 54px;
+    height: 54px;
+    font-size: 25px;
+  }
+
+  .touch-button--small {
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+  }
+
+  .overlay__panel {
+    padding: 22px;
+  }
+}
+
+@media (max-height: 480px) {
+  .overlay__panel {
+    max-width: 520px;
+    padding: 18px 22px;
+  }
+
+  h1 {
+    font-size: 34px;
+  }
+
+  .overlay__copy {
+    margin: 10px auto 16px;
+    font-size: 15px;
+  }
+
+  .overlay__hint {
+    margin-top: 14px;
+  }
+
+  .touch-button {
+    width: 50px;
+    height: 50px;
+  }
+
+  .touch-button--small {
+    width: 45px;
+    height: 45px;
+  }
+}

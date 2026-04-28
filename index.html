@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <title>鈴鈴村跳跳冒險</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <main id="app">
+      <section id="game-shell" aria-label="鈴鈴村跳跳冒險遊戲">
+        <div id="hud" class="hud">
+          <div class="hud__cluster">
+            <span class="hud__pill">生命 <strong id="lives">3</strong></span>
+            <span class="hud__pill">鈴鐺 <strong id="bells">0</strong>/12</span>
+            <span class="hud__pill">信件 <strong id="letters">0</strong>/3</span>
+          </div>
+          <div class="hud__cluster hud__cluster--right">
+            <span class="hud__pill" id="objective">抵達村口告示牌</span>
+            <button id="pause-button" class="icon-button" aria-label="暫停" title="暫停">II</button>
+          </div>
+        </div>
+
+        <div id="game-container"></div>
+
+        <div id="touch-controls" class="touch-controls" aria-label="手機觸控操作">
+          <div class="touch-controls__cluster">
+            <button id="touch-left" class="touch-button" aria-label="向左" title="向左">←</button>
+            <button id="touch-right" class="touch-button" aria-label="向右" title="向右">→</button>
+          </div>
+          <div class="touch-controls__cluster">
+            <button id="touch-dash" class="touch-button touch-button--small" aria-label="衝刺" title="衝刺">↠</button>
+            <button id="touch-jump" class="touch-button" aria-label="跳躍" title="跳躍">↑</button>
+          </div>
+        </div>
+
+        <div id="overlay" class="overlay">
+          <div class="overlay__panel">
+            <p class="overlay__eyebrow">Belltree Village</p>
+            <h1>鈴鈴村跳跳冒險</h1>
+            <p class="overlay__copy">幫村務小狗助理收回散落的信件，跳過平台、踩掉雜草怪，抵達村口告示牌。</p>
+            <button id="start-button" class="primary-button">開始遊戲</button>
+            <p class="overlay__hint">鍵盤：方向鍵 / A D 移動，空白鍵跳躍，Shift 衝刺。手機：使用畫面底部按鈕。</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./vendor/phaser.min.js"></script>
+    <script src="./src/main.js"></script>
+  </body>
+</html>

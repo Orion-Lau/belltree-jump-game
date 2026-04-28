@@ -1,0 +1,14 @@
+# Local runtime and tunnel artifacts
+server.log
+server.err.log
+cloudflared.log
+cloudflared.err.log
+tools/
+
+# Playtest screenshots
+playtest-*.png
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
