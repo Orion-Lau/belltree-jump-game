@@ -161,7 +161,11 @@ class VillageScene extends Phaser.Scene {
     this.createInput();
     this.setupCamera();
     this.updateHud();
-    this.physics.pause();
+    if (state.started && !state.paused && !state.failed && !state.won) {
+      this.physics.resume();
+    } else {
+      this.physics.pause();
+    }
   }
 
   createTextures() {
