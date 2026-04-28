@@ -46,6 +46,7 @@ class VillageScene extends Phaser.Scene {
     this.lastGroundedAt = 0;
     this.jumpBufferedUntil = 0;
     this.dashReadyAt = 0;
+    this.dashAttackUntil = 0;
     this.createTextures();
     this.createWorld();
     this.createPlayer();
@@ -266,6 +267,7 @@ class VillageScene extends Phaser.Scene {
     if (dashPressed && now >= this.dashReadyAt) {
       this.player.setVelocityX((this.player.flipX ? -1 : 1) * 460);
       this.dashReadyAt = now + 360;
+      this.dashAttackUntil = now + 260;
       this.cameras.main.shake(70, 0.0018);
     }
 
@@ -287,10 +289,18 @@ class VillageScene extends Phaser.Scene {
   hitEnemy(player, enemy) {
     if (this.isResetting || !enemy.active) return;
 
+    const dashingIntoEnemy = this.time.now <= this.dashAttackUntil && Math.abs(player.body.velocity.x) > 260;
     const fallingOntoEnemy = player.body.velocity.y > 120 && player.y < enemy.y - 8;
-    if (fallingOntoEnemy) {
+    if (fallingOntoEnemy || dashingIntoEnemy) {
       enemy.disableBody(true, true);
-      player.setVelocityY(-360);
+      if (fallingOntoEnemy) {
+        player.setVelocityY(-360);
+      } else {
+        player.setVelocityX((player.flipX ? 1 : -1) * 150);
+        player.setVelocityY(-170);
+        this.dashAttackUntil = 0;
+        this.cameras.main.shake(90, 0.003);
+      }
       state.weeds += 1;
       this.popSparkle(enemy.x, enemy.y);
       this.updateHud();
